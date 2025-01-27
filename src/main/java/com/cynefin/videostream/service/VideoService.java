@@ -1,6 +1,7 @@
 package com.cynefin.videostream.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpHeaders;
@@ -11,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -20,6 +23,9 @@ public class VideoService {
 
     @Value("${video.file-path}")
     private String videoPath;
+
+    //Maximum chunk size (1MB = 1024 * 1024 bytes)
+    private static final long MAX_CHUNK_SIZE = 1024 * 1024;
 
     private final ResourceLoader resourceLoader;
 
@@ -34,31 +40,52 @@ public class VideoService {
                 .body(resource);
     }
 
-    public ResponseEntity<Resource> streamVideo(String range) {
-        File videoFile = new File(videoPath);
-        long videoLength = videoFile.length();
-
+    public ResponseEntity<Resource> streamVideo(String rangeHeader) {
         try {
-            RandomAccessFile file = new RandomAccessFile(videoFile, "r");
-            long start = 0, end = videoLength - 1;
+            File videoFile = new File(videoPath);
+            long fileSize = videoFile.length();
 
-            if (range != null) {
-                HttpRange httpRange = HttpRange.parseRanges(range).get(0);
-                start = httpRange.getRangeStart(videoLength);
-                end = httpRange.getRangeEnd(videoLength);
+            long startPosition = 0;
+            long endPosition = Math.min(MAX_CHUNK_SIZE - 1, fileSize - 1);
+
+            if (rangeHeader != null) {
+                // Parse range header
+                List<HttpRange> ranges = HttpRange.parseRanges(rangeHeader);
+                if (!ranges.isEmpty()) {
+                    HttpRange range = ranges.get(0);
+                    startPosition = range.getRangeStart(fileSize);
+                    long requestedEnd = range.getRangeEnd(fileSize);
+                    // Limit the chunk size
+                    endPosition = Math.min(startPosition + MAX_CHUNK_SIZE - 1, requestedEnd);
+                }
             }
 
-            long contentLength = end - start + 1;
+            // Calculate content length
+            long contentLength = endPosition - startPosition + 1;
 
-            byte[] videoBytes = new byte[(int) contentLength];
-            file.seek(start);
-            file.readFully(videoBytes);
+            // Create input stream for the specified range
+            InputStream inputStream = Files.newInputStream(videoFile.toPath());
+            inputStream.skip(startPosition);
+
+            // Create headers
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.CONTENT_TYPE, "video/mp4");
+            headers.add(HttpHeaders.ACCEPT_RANGES, "bytes");
+            headers.add(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength));
+            headers.add(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d",
+                    startPosition, endPosition, fileSize));
+
+            // Create InputStreamResource that will be streamed to the client
+            InputStreamResource resource = new InputStreamResource(inputStream) {
+                @Override
+                public long contentLength() throws IOException {
+                    return contentLength;
+                }
+            };
 
             return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
-                    .header(HttpHeaders.CONTENT_TYPE, "video/mp4")
-                    .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + videoLength)
-                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
-                    .body(new org.springframework.core.io.ByteArrayResource(videoBytes));
+                    .headers(headers)
+                    .body(resource);
 
         } catch (IOException e) {
             e.printStackTrace();
