@@ -16,16 +16,23 @@ public class VideoController {
 
     @GetMapping("/")
     public ResponseEntity<Resource> getHomePage() {
+        logThread();
         return videoService.getHomePage();
     }
 
     @GetMapping("/video")
     public ResponseEntity<Resource> streamVideo(@RequestHeader(value = "Range", required = false) String range) {
+        logThread();
         return videoService.streamVideo(range);
     }
 
     @GetMapping("/video/info")
     public ResponseEntity<Object> getVideoInformation() {
+        logThread();
         return videoService.getVideoInformation();
+    }
+
+    private void logThread() {
+        System.out.println("Processing request in thread: " + Thread.currentThread().getName());
     }
 }
