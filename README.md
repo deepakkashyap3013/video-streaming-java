@@ -1,6 +1,6 @@
 # Video Streaming Application
 
-This project demonstrates a simple video streaming application built with Spring Boot. It allows users to stream video content from a server to a web client.
+This project showcases a video streaming application built with Spring Boot. It enables users to stream video content from a server directly to their web browser, providing a simple yet effective way to deliver video streams over the internet.
 
 ## Features
 
@@ -44,13 +44,16 @@ This project demonstrates a simple video streaming application built with Spring
 The application can be configured using the `application.properties` file located in `/resources` directory.
 
 ```
+# Spring Boot Application Configuration
 spring.application.name=videostream
 video.file-path=src/main/resources/video/sample.mp4
 server.port=8080
-spring.task.execution.pool.core-size=10
-spring.task.execution.pool.max-size=20
-spring.task.execution.pool.queue-capacity=100
-spring.task.execution.thread-name-prefix=HttpThreadPool-
+
+# Web server thread pool (Tomcat)
+server.tomcat.max-threads=100
+server.tomcat.accept-count=200
+server.tomcat.connection-timeout=20000
+
 ```
 
 ### API Endpoints
