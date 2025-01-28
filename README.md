@@ -5,7 +5,6 @@ This project showcases a video streaming application built with Spring Boot. It 
 ## Features
 
 - **Video Streaming**: Stream video content to clients with support for range requests.
-- **Thread Pool Configuration**: Custom thread pool configuration for handling HTTP requests.
 - **Spring Boot Integration**: Utilizes Spring Boot for easy setup and configuration.
 - **Resource Handling**: Serves static resources and video files efficiently.
 
@@ -50,9 +49,14 @@ video.file-path=src/main/resources/video/sample.mp4
 server.port=8080
 
 # Web server thread pool (Tomcat)
-server.tomcat.max-threads=100
-server.tomcat.accept-count=200
-server.tomcat.connection-timeout=20000
+#default: 200
+# server.tomcat.max-threads=200
+
+#default: 100
+# server.tomcat.accept-count=150
+
+#default: 60000
+# server.tomcat.connection-timeout=30000
 
 ```
 
