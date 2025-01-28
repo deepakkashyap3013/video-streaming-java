@@ -48,6 +48,13 @@ spring.application.name=videostream
 video.file-path=src/main/resources/video/sample.mp4
 server.port=8080
 
+# Async Task Executor thread config
+spring.task.execution.pool.core-size=10
+spring.task.execution.pool.max-size=20
+spring.task.execution.pool.queue-capacity=50
+spring.task.execution.thread-name-prefix=AsyncThreadPool-
+
+
 # Web server thread pool (Tomcat)
 #default: 200
 # server.tomcat.max-threads=200
@@ -57,7 +64,6 @@ server.port=8080
 
 #default: 60000
 # server.tomcat.connection-timeout=30000
-
 ```
 
 ### API Endpoints
