@@ -61,6 +61,14 @@ server.tomcat.connection-timeout=20000
 - `GET /video`: Streams the video content
 - `GET /video/info`: Provides information about the video file
 
+### Sample Load Testing result
+- **Endpoint**: `GET /video`
+- **Testing workspace**: JMeter
+- **Configuration**: 2000rps
+
+  <img width="1800" alt="Screenshot 2025-01-28 at 1 10 06 PM" src="https://github.com/user-attachments/assets/fd26a219-cb78-4d8b-b8e7-09f918142ec6" />
+
+
 
 ### Acknowledgements
 
